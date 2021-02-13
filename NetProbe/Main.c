@@ -53,7 +53,7 @@ static struct option send_setting[] =
     {"rhost", required_argument, 0, 2},
     {"rport", required_argument, 0, 3},
     {"proto", required_argument, 0, 4},
-    {"pksize", required_argument, 0, 5},
+    {"pktsize", required_argument, 0, 5},
     {"pktrate", required_argument, 0, 6},
     {"pktnum", required_argument, 0, 7},
     {"sbufsize", required_argument, 0, 8},
@@ -65,7 +65,7 @@ static struct option recv_setting[] =
     {"lhost", required_argument, 0, 2},
     {"lport", required_argument, 0, 3},
     {"proto", required_argument, 0, 4},
-    {"pksize", required_argument, 0, 5},
+    {"pktsize", required_argument, 0, 5},
     {"rbufsize", required_argument, 0, 6},
 };
 
@@ -131,7 +131,7 @@ int SEND(int argc, char* argv[])
     char* rhost = SERVER;
     int rport = DEFAULT_REMOTE_PORT_NUMBER;
     char* proto = DEFAULT_PROTO;
-    int pksize = DEFAULT_BSIZE;
+    int pktsize = DEFAULT_BSIZE;
     int pktrate = DEFAULT_TXRATE;
     int pktnum = DEFAULT_TOTAL_NUM_MESSAGES;
     int sbufsize = 0;
@@ -154,7 +154,7 @@ int SEND(int argc, char* argv[])
             proto = optarg;
             break;
         case 5:
-            pksize = atoi(optarg);
+            pktsize = atoi(optarg);
             break;
         case 6:
             pktrate = atoi(optarg);
@@ -202,7 +202,7 @@ int SEND(int argc, char* argv[])
 
     printf("NetProbe Configurations:\n");
     printf("Mode:SEND Protocol:%s\n", proto);
-    printf("-stat = %d\n-pktize = %d\n-pktrate = %d\n-pktnum = %d\n-sbufsize = %d\n", stat, pksize, pktrate, pktnum, sbufsize);
+    printf("-stat = %d\n-pkstize = %d\n-pktrate = %d\n-pktnum = %d\n-sbufsize = %d\n", stat, pktsize, pktrate, pktnum, sbufsize);
 
     SOCKET s;
     WSADATA wsa;
@@ -211,6 +211,8 @@ int SEND(int argc, char* argv[])
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
     {printf("Failed. Error Code : %d", WSAGetLastError());  exit(EXIT_FAILURE);}
 
+
+    /***** SEND by UDP *****/
     if (strcmp(proto, "UDP") == 0 || strcmp(proto, "udp") == 0)
     {
         struct sockaddr_in  si_other;
@@ -221,15 +223,14 @@ int SEND(int argc, char* argv[])
         double total_sent_bit = 0;
         double average = 0;
         double jitter = 0;
-        int stat_sent = 0;
 
-        memset(buf, 'a', pksize);
+        memset(buf, 'a', pktsize);
         memset(message, 0, sizeof(int));
 
         //Create a socket
         if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
         { printf("Could not create socket : %d", WSAGetLastError()); exit(EXIT_FAILURE); }
-
+        
         //setup address structure
         memset((char*)&si_other, 0, sizeof(si_other));
         si_other.sin_family = AF_INET;
@@ -254,16 +255,15 @@ int SEND(int argc, char* argv[])
             //send package
             if (cum_time_cost > stat) {
                 total_time += cum_time_cost;
-                printf("\rElapsed:%dms | Pkts:%d | Rate:%.2fkbps| Jitter:%.2fms ", (int)total_time, stat_sent/stat, (total_sent_bit/8192.0/total_time), jitter);
-                stat_sent = 0;
+                printf("\rElapsed:%dms | Rate:%.2fkbps | Jitter:%.2fms ", (int)total_time, (total_sent_bit/8192.0/total_time), jitter);
                 cum_time_cost = 0;
                 previous_clock = clock();
             }
 
             //send the package
-            while (bytes_sent < pksize) {
+            while (bytes_sent < pktsize) {
 
-                int sent_bit = sendto(s, buf + bytes_sent, pksize, 0, (struct sockaddr*)&si_other, sizeof(SOCKADDR));
+                int sent_bit = sendto(s, buf + bytes_sent, pktsize, 0, (struct sockaddr*)&si_other, sizeof(SOCKADDR));
                 
                 if (sent_bit > 0) { bytes_sent = bytes_sent + sent_bit; }
                 else
@@ -275,13 +275,15 @@ int SEND(int argc, char* argv[])
                 total_sent_bit += bytes_sent;
             }
             numSent++;
-            stat_sent++;
         }
 
         closesocket(s);
         WSACleanup();
         return 0;
     }
+
+
+    /***** SEND by TCP *****/
     else if (strcmp(proto, "TCP") == 0 || strcmp(proto, "tcp") == 0)
     {
         struct sockaddr_in server;
@@ -291,7 +293,6 @@ int SEND(int argc, char* argv[])
         double total_sent_bit = 0;
         double average = 0;
         double jitter = 0;
-        int stat_sent = 0;
 
         //Create a socket
         if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
@@ -322,16 +323,15 @@ int SEND(int argc, char* argv[])
             //print status
             if (cum_time_cost > stat) {
                 total_time += cum_time_cost;
-                printf("\rElapsed:%dms | Pkts:%d | Rate:%.2fkbps| Jitter:%.2fms ", (int)total_time, stat_sent/stat, (total_sent_bit / 8192.0 / total_time), jitter);
+                printf("\rElapsed:%dms | Rate:%.2fkbps | Jitter:%.2fms ", (int)total_time, (total_sent_bit / 8192.0 / total_time), jitter);
                 cum_time_cost = 0;
-                stat_sent = 0;
                 previous_clock = clock();
             }
 
             //send the package
-            while (bytes_sent < pksize) {
+            while (bytes_sent < pktsize) {
 
-                int sent_bit = send(s, buf + bytes_sent, pksize, 0);
+                int sent_bit = send(s, buf + bytes_sent, pktsize, 0);
                 if (sent_bit > 0) { bytes_sent = bytes_sent + sent_bit; }
                 else
                 {
@@ -342,7 +342,6 @@ int SEND(int argc, char* argv[])
                 total_sent_bit += bytes_sent;
             }
             numSent++;
-            stat_sent++;
         }
 
         closesocket(s);
@@ -351,7 +350,7 @@ int SEND(int argc, char* argv[])
     }
 }
 
-/* RECV MODE*/
+/* RECV MODE */
 int RECV(int argc, char* argv[])
 {
     WSADATA wsa;
@@ -395,6 +394,31 @@ int RECV(int argc, char* argv[])
             rbufsize = atoi(optarg);
             break;
         default:
+            printf("Please choose NetProbe's mode!\n"
+                "SEND MODE: -send\n"
+                "RECEIEVE MODE: -recv\n"
+                "HOST MODE: -host\n"
+                "If[mode] = -send then the following are the supported parameters :\n"
+                "           < -stat yyy >         update statistics once every yyy ms. (Default = 500 ms)\n"
+                "           < -rhost hostname > send data to host specified by hostname. (Default 'localhost')\n"
+                "           < -rport portnum > send data to remote host at port number portnum. (Default '4180')\n"
+                "           < -proto tcp || udp > send data using TCP or UDP. (Default UDP)\n"
+                "           < -pktsize bsize > send message of bsize bytes. (Default 1000 bytes)\n"
+                "           < -pktrate txrate > send data at a data rate of txrate bytes per second,\n"
+                "                               0 means as fast as possible. (Default 1000 bytes / second\n"
+                "           < -pktnum num > send or receive a total of num messages. (Default = infinite)\n"
+                "           < -sbufsize bsize > set the outgoing socket buffer size to bsize bytes.\n"
+                "else if[mode] = -recv then\n"
+                "           < -stat yyy >         update statistics once every yyy ms. (Default = 500 ms)\n"
+                "           < -lhost hostname > hostname to bind to. (Default late binding)\n"
+                "           < -lport portnum > port number to bind to. (Default '4180')\n"
+                "           < -proto tcp || udp > send data using TCP or UDP. (Default UDP)\n"
+                "           < -pktsize bsize > send message of bsize bytes. (Default 1000 bytes)\n"
+                "           < -rbufsize bsize > set the incoming socket buffer size to bsize bytes.\n"
+                "else if[mode] = -host then"
+                "           <hostname>     resolve DNS records for hostname(Default 'localhost').\n"
+                "end if."
+            );
             break;
         }
     }
@@ -405,7 +429,7 @@ int RECV(int argc, char* argv[])
     
     printf("NetProbe Configurations:\n");
     printf("Mode:RECV Protocol:%s\n", proto);
-    printf("-stat = %d\n-pktize = %d\n-rbufsize = %d\n-rhost = %s\n-rport = %d\n", stat, pksize, rbufsize, lhost, lport);
+    printf("-stat = %d\n-pkstize = %d\n-rbufsize = %d\n-rhost = %s\n-rport = %d\n", stat, pksize, rbufsize, lhost, lport);
 
     if (rbufsize == 0) { printf("Default recv buffer size = 65536 bytes\n"); }
     else { printf("Custom recv buffer size = %d", rbufsize); }
@@ -416,6 +440,8 @@ int RECV(int argc, char* argv[])
         printf("Failed. Error Code : %d", WSAGetLastError());
         exit(EXIT_FAILURE);
     }
+
+
     /***** RECV by UDP *****/
     if (strcmp(proto, "UDP") == 0 || strcmp(proto, "udp") == 0)
     {
@@ -426,14 +452,15 @@ int RECV(int argc, char* argv[])
         if (rbufsize == 0) { buf = (char*)calloc(sizeof(char), BUFLEN); }
         else { buf = (char*)calloc(sizeof(char), rbufsize); }
         
-        //Create a socket
-        if ((s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET)
-        { printf("Could not create socket : %d", WSAGetLastError()); }
-
         //Prepare the sockaddr_in structure
+        memset((char*)&server, 0, sizeof(server));
         server.sin_family = AF_INET;
-        server.sin_addr.s_addr = INADDR_ANY;
+        server.sin_addr.s_addr = htonl(INADDR_ANY);
         server.sin_port = htons(PORT);
+
+        //Create a socket
+        if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
+        { printf("Could not create socket : %d", WSAGetLastError()); }
 
         //Bind
         if (bind(s, (struct sockaddr*)&server, sizeof(server)) == SOCKET_ERROR)
@@ -441,11 +468,13 @@ int RECV(int argc, char* argv[])
             printf("Bind failed with error code : %d", WSAGetLastError());
             exit(EXIT_FAILURE);
         }
+
         printf("Binding local socket to port %d using late binding ... successful.\n", lport);
         if (rbufsize == 0) { printf("Default recv buffer size = 65536 bytes\n"); }
         else { printf("Custom recv buffer size = %d", rbufsize); }
 
-        printf("Waiting for incoming datagrames ...\n\n");
+        printf("Waiting for incoming datagrames ...\n");
+
         //keep listening for data
         while (1)
         {
@@ -459,16 +488,17 @@ int RECV(int argc, char* argv[])
             //print message
             if (cum_time_cost > stat) {
                 total_time += cum_time_cost;
-                printf("\rElapsed:%dms | Pkts:%d | Lost:%.2f%% | Rate:%.2fkbps| Jitter:%.2fms ", (int)total_time, stat_recv/stat, loss_ratio, (total_recv_bit / 8192.0 / total_time), jitter);
+                printf("\rElapsed:%dms | Pkts:%d | Lost:%.2f%% | Rate:%.2fkbps | Jitter:%.2fms ", (int)total_time, stat_recv/stat, loss_ratio, (total_recv_bit / 8192.0 / total_time), jitter);
                 cum_time_cost = 0;
                 stat_recv = 0;
                 previous_clock = clock();
             }
-            
+
+
             while (bytes_recv < pksize) {
 
                 int recv_len = recvfrom(s, buf + bytes_recv, pksize, 0, (struct sockaddr*)&si_other, &slen);
-                loss_ratio = (((float)ntohl(*((unsigned long*)(buf))) - (float)packRecv) / (float)ntohl(*((unsigned long*)(buf))))*100.00;
+                loss_ratio = (((float)ntohl(*((unsigned long*)(buf))) - (float)packRecv) / (float)ntohl(*((unsigned long*)(buf)))) * 100.00;
 
                 if (recv_len == SOCKET_ERROR)
                 {
@@ -491,6 +521,7 @@ int RECV(int argc, char* argv[])
 
         return 0;
     }
+
 
     /***** RECV by TCP *****/
     else if (strcmp(proto, "TCP") == 0 || strcmp(proto, "tcp") == 0)
@@ -534,7 +565,7 @@ int RECV(int argc, char* argv[])
             printf("accept failed with error code : %d", WSAGetLastError());
         }
 
-        puts("Connection accepted\n");
+        puts("Connection accepted");
 
         while (1)
         {
@@ -548,7 +579,7 @@ int RECV(int argc, char* argv[])
             //print message
             if (cum_time_cost > stat) {
                 total_time += cum_time_cost;
-                printf("\rElapsed:%dms | Pkts:%d | Rate:%.2fkbps| Jitter:%.2fms ", (int)total_time, stat_recv/stat, (total_recv_bit / 8192.0 / total_time), jitter);
+                printf("\rElapsed:%dms | Pkts:%d | Rate:%.2fkbps | Jitter:%.2fms ", (int)total_time, stat_recv/stat, (total_recv_bit / 8192.0 / total_time), jitter);
                 cum_time_cost = 0;
                 stat_recv = 0;
                 previous_clock = clock();
