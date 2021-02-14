@@ -280,6 +280,7 @@ int SEND(int argc, char* argv[])
                 total_sent_bit += bytes_sent;
             }
             numSent++;
+            //printf("numSent %d vs pktnum %d\n", numSent, pktnum);
         }
 
         closesocket(s);
@@ -492,7 +493,7 @@ int RECV(int argc, char* argv[])
             //print message
             if (cum_time_cost > stat) {
                 total_time += cum_time_cost;
-                printf("\rElapsed:%dms | Pkts:%d | Lost:%.4f%% | Rate:%.2fkbps | Jitter:%.2fms ", (int)total_time, stat_recv/stat, loss_ratio, (total_recv_bit / 8192.0 / total_time), jitter);
+                printf("\rElapsed:%dms | Pkts:%d | Lost:%.4f%% | Rate:%.2fkbps | Jitter:%.2fms ", (int)total_time, stat_recv, loss_ratio, (total_recv_bit / 8192.0 / total_time), jitter);
                 cum_time_cost = 0;
                 stat_recv = 0;
                 previous_clock = clock();
