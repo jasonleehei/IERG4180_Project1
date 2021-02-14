@@ -41,7 +41,7 @@ static struct option mode_options[] =
 {   
     {"send", no_argument, 0, 1},
     {"recv", no_argument, 0, 2},
-    {"host", required_argument, 0, 3},
+    {"host", no_argument, 0, 3},
 };
 
 static struct option send_setting[] =
@@ -85,8 +85,9 @@ int main(int argc, char* argv[]) {
                 RECV(argc, argv);
                 break;
             case 3:
-                host = optarg;
-                HOST(host);
+                    if (argv[2]) { host = argv[2]; }
+                    else { host = "localhost"; }
+                    HOST(host);
                 break;
             default:
                 break;
@@ -491,7 +492,7 @@ int RECV(int argc, char* argv[])
             //print message
             if (cum_time_cost > stat) {
                 total_time += cum_time_cost;
-                printf("\rElapsed:%dms | Pkts:%d | Lost:%.2f%% | Rate:%.2fkbps | Jitter:%.2fms ", (int)total_time, stat_recv/stat, loss_ratio, (total_recv_bit / 8192.0 / total_time), jitter);
+                printf("\rElapsed:%dms | Pkts:%d | Lost:%.4f%% | Rate:%.2fkbps | Jitter:%.2fms ", (int)total_time, stat_recv/stat, loss_ratio, (total_recv_bit / 8192.0 / total_time), jitter);
                 cum_time_cost = 0;
                 stat_recv = 0;
                 previous_clock = clock();
@@ -619,6 +620,7 @@ int HOST(char *host)
 {   
     printf("NetProbe Configurations:\n");
     printf("Mode:HOST \n");
+
 
     WSADATA wsaData;
     int iResult;
