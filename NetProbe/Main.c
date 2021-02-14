@@ -11,30 +11,27 @@
 #include<errno.h>
 #include "getopt.h"
 
-
-
 #pragma comment(lib, "Ws2_32.lib")
 
 #define SERVER "127.0.0.1"
 #define BUFLEN 65536
 #define PORT 4180	//The port on which to send data
 
-/*DEFAULT define of send & recv*/
+/* DEFAULT define of send & recv */
 #define DEFAULT_UPDATE 500                 
 #define DEFAULT_PROTO "UDP"
 #define DEFAULT_BSIZE 1000
 
-/*DEFAULT define of send*/
+/* DEFAULT define of send */
 #define DEFAULT_HOST_NAME "localhost"
 #define DEFAULT_REMOTE_PORT_NUMBER 4180
 #define DEFAULT_TXRATE 1000
 #define DEFAULT_TOTAL_NUM_MESSAGES 0
 #define DEFAULT_SEND_BUFFER 65536
 
-/*DEFAULT define of recv*/
+/* DEFAULT define of recv */
 #define DEFAULT_BIND_HOSTNAME "IN_ADDR_ANY"
 #define DEFAULT_BIND_PORT 4180
-
 
 int SEND(int argc, char* argv[]);
 int RECV(int argc, char* argv[]);
@@ -73,6 +70,8 @@ static struct option recv_setting[] =
 int main(int argc, char* argv[]) {
 
     char *host; /* for host mode usage*/
+
+    /* Select Mode */
     int MODE = getopt_long_only(argc, argv, "", mode_options, 0);
     
     if (MODE != -1)
@@ -123,20 +122,21 @@ int main(int argc, char* argv[]) {
 
 }
 
-/* SEND MODE*/
+/* SEND MODE */
 int SEND(int argc, char* argv[])
 {
-    unsigned long numSent = 0;
+    /* Paramters */
     int stat = DEFAULT_UPDATE;
     char* rhost = SERVER;
-    int rport = DEFAULT_REMOTE_PORT_NUMBER;
     char* proto = DEFAULT_PROTO;
+    int rport = DEFAULT_REMOTE_PORT_NUMBER;
     int pktsize = DEFAULT_BSIZE;
     int pktrate = DEFAULT_TXRATE;
     int pktnum = DEFAULT_TOTAL_NUM_MESSAGES;
     int sbufsize = 0;
     int parameters;
 
+    /* getopt of parameters in mode */
     while ((parameters = getopt_long_only(argc, argv, "", send_setting, 0)) != -1)
     {
         switch (parameters)
@@ -196,20 +196,24 @@ int SEND(int argc, char* argv[])
         
     }
 
-    clock_t current_clock, previous_clock = clock();
-    double  cum_time_cost = 0, coum_bytes_send = 0;
-    double total_time = 0;
-
     printf("NetProbe Configurations:\n");
     printf("Mode:SEND Protocol:%s\n", proto);
     printf("-stat = %d\n-pkstize = %d\n-pktrate = %d\n-pktnum = %d\n-sbufsize = %d\n", stat, pktsize, pktrate, pktnum, sbufsize);
 
+
+    /* Statistics Display Setting */
+    clock_t current_clock, previous_clock = clock();
+    double  cum_time_cost = 0, coum_bytes_send = 0;
+    double total_time = 0;
+
+    /* Initialise winsock */
     SOCKET s;
     WSADATA wsa;
-
-    //Initialise winsock
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
     {printf("Failed. Error Code : %d", WSAGetLastError());  exit(EXIT_FAILURE);}
+
+
+    unsigned long numSent = 0;
 
 
     /***** SEND by UDP *****/
@@ -353,24 +357,25 @@ int SEND(int argc, char* argv[])
 /* RECV MODE */
 int RECV(int argc, char* argv[])
 {
-    WSADATA wsa;
 
+    /* parameters of recv */
     int stat = DEFAULT_UPDATE;
     char* lhost = DEFAULT_BIND_HOSTNAME;
     int lport = DEFAULT_BIND_PORT;
     char* proto = DEFAULT_PROTO;
     int pksize = DEFAULT_BSIZE;
     int rbufsize = 0;
+        int parameters;
+
     double total_recv_bit = 0;
     double average = 0;
     double jitter = 0;
     float loss_ratio = 0;
     int stat_recv = 0;
 
-    int parameters;
-
     u_long packRecv = 0;
 
+    /* getopt in recv */
     while ((parameters = getopt_long_only(argc, argv, "", recv_setting, 0)) != -1)
     {
         switch (parameters)
@@ -423,18 +428,19 @@ int RECV(int argc, char* argv[])
         }
     }
     
+    printf("NetProbe Configurations:\n");
+    printf("Mode:RECV Protocol:%s\n", proto);
+    printf("-stat = %d\n-pkstize = %d\n-rbufsize = %d\n-rhost = %s\n-rport = %d\n", stat, pksize, rbufsize, lhost, lport);
+    if (rbufsize == 0) { printf("Default recv buffer size = 65536 bytes\n"); }
+    else { printf("Custom recv buffer size = %d", rbufsize); }
+
+    /* For Statistics Display */
     clock_t current_clock, previous_clock = clock();
     double  cum_time_cost = 0, coum_bytes_send = 0;
     double total_time = 0;
     
-    printf("NetProbe Configurations:\n");
-    printf("Mode:RECV Protocol:%s\n", proto);
-    printf("-stat = %d\n-pkstize = %d\n-rbufsize = %d\n-rhost = %s\n-rport = %d\n", stat, pksize, rbufsize, lhost, lport);
-
-    if (rbufsize == 0) { printf("Default recv buffer size = 65536 bytes\n"); }
-    else { printf("Custom recv buffer size = %d", rbufsize); }
-
     //Initialise winsock
+    WSADATA wsa;
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
     {
         printf("Failed. Error Code : %d", WSAGetLastError());
@@ -470,9 +476,6 @@ int RECV(int argc, char* argv[])
         }
 
         printf("Binding local socket to port %d using late binding ... successful.\n", lport);
-        if (rbufsize == 0) { printf("Default recv buffer size = 65536 bytes\n"); }
-        else { printf("Custom recv buffer size = %d", rbufsize); }
-
         printf("Waiting for incoming datagrames ...\n");
 
         //keep listening for data
@@ -514,7 +517,6 @@ int RECV(int argc, char* argv[])
             packRecv++;
             stat_recv++;
         }
-        
 
         closesocket(s);
         WSACleanup();
