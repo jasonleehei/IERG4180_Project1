@@ -1,1 +1,10 @@
-﻿  NetProbe.vcxproj -> C:\Users\Jacob-Lee\Documents\CUHK-S2\IERG4180\IERG4180_Project\IERG4180_Project1\NetProbe\x64\Debug\NetProbe.exe
+﻿  Main.c
+C:\Users\Jacob-Lee\Documents\CUHK-S2\IERG4180\IERG4180_Project\IERG4180_Project1\NetProbe\getopt.h(59,30): warning C4081: expected 'newline'; found ';'
+C:\Users\Jacob-Lee\Documents\CUHK-S2\IERG4180\IERG4180_Project\IERG4180_Project1\NetProbe\Main.c(258,102): warning C4244: 'function': conversion from 'double' to 'int', possible loss of data
+C:\Users\Jacob-Lee\Documents\CUHK-S2\IERG4180\IERG4180_Project\IERG4180_Project1\NetProbe\Main.c(327,102): warning C4244: 'function': conversion from 'double' to 'int', possible loss of data
+C:\Users\Jacob-Lee\Documents\CUHK-S2\IERG4180\IERG4180_Project\IERG4180_Project1\NetProbe\Main.c(493,103): warning C4244: 'function': conversion from 'double' to 'int', possible loss of data
+C:\Users\Jacob-Lee\Documents\CUHK-S2\IERG4180\IERG4180_Project\IERG4180_Project1\NetProbe\Main.c(508,140): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jacob-Lee\Documents\CUHK-S2\IERG4180\IERG4180_Project\IERG4180_Project1\NetProbe\Main.c(583,103): warning C4244: 'function': conversion from 'double' to 'int', possible loss of data
+C:\Users\Jacob-Lee\Documents\CUHK-S2\IERG4180\IERG4180_Project\IERG4180_Project1\NetProbe\Main.c(661,27): warning C4013: 'getaddrinfo' undefined; assuming extern returning int
+C:\Users\Jacob-Lee\Documents\CUHK-S2\IERG4180\IERG4180_Project\IERG4180_Project1\NetProbe\Main.c(741,17): warning C4013: 'freeaddrinfo' undefined; assuming extern returning int
+  NetProbe.vcxproj -> C:\Users\Jacob-Lee\Documents\CUHK-S2\IERG4180\IERG4180_Project\IERG4180_Project1\NetProbe\x64\Debug\NetProbe.exe

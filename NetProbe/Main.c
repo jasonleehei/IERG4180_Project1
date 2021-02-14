@@ -199,7 +199,7 @@ int SEND(int argc, char* argv[])
 
     printf("NetProbe Configurations:\n");
     printf("Mode:SEND Protocol:%s\n", proto);
-    printf("-stat = %d\n-pkstize = %d\n-pktrate = %d\n-pktnum = %d\n-sbufsize = %d\n", stat, pktsize, pktrate, pktnum, sbufsize);
+    printf("-stat = %d\n-pktsize = %d\n-pktrate = %d\n-pktnum = %d\n-sbufsize = %d\n", stat, pktsize, pktrate, pktnum, sbufsize);
 
 
     /* Statistics Display Setting */
@@ -244,7 +244,7 @@ int SEND(int argc, char* argv[])
 
         printf("Remote host localhost lookup successful, IP address is 127.0.0.1\n");
         if (sbufsize == 0) { printf("Default send buffer size = 65536 bytes\n"); }
-        else { printf("Custom send buffer size = %d", sbufsize); }
+        else { printf("Custom send buffer size = %d\n", sbufsize); }
 
         while (pktnum == 0 || (pktnum != 0 && (int)numSent <= pktnum))
         {
@@ -315,7 +315,7 @@ int SEND(int argc, char* argv[])
 
         printf("Remote host localhost lookup successful, IP address is 127.0.0.1\n");
         if (sbufsize == 0) { printf("Default send buffer size = 65536 bytes\n"); }
-        else { printf("Custom send buffer size = %d", sbufsize); }
+        else { printf("Custom send buffer size = %d\n", sbufsize); }
 
         while (pktnum == 0 || (pktnum != 0 && (int)numSent <= pktnum))
         {
@@ -341,7 +341,7 @@ int SEND(int argc, char* argv[])
                 if (sent_bit > 0) { bytes_sent = bytes_sent + sent_bit; }
                 else
                 {
-                    if (WSAGetLastError() == 10054) { printf("\nDisconnect from the server"); }
+                    if (WSAGetLastError() == 10054 || WSAGetLastError() == 10053) { printf("\nDisconnect from the server"); }
                     else { printf("sendto() failed with error code : %d", WSAGetLastError()); }
                     return -1;
                 }
@@ -354,6 +354,8 @@ int SEND(int argc, char* argv[])
         WSACleanup();
         return 0;
     }
+
+    return 0;
 }
 
 /* RECV MODE */
@@ -432,9 +434,9 @@ int RECV(int argc, char* argv[])
     
     printf("NetProbe Configurations:\n");
     printf("Mode:RECV Protocol:%s\n", proto);
-    printf("-stat = %d\n-pkstize = %d\n-rbufsize = %d\n-rhost = %s\n-rport = %d\n", stat, pksize, rbufsize, lhost, lport);
+    printf("-stat = %d\n-pktsize = %d\n-rbufsize = %d\n-rhost = %s\n-rport = %d\n", stat, pksize, rbufsize, lhost, lport);
     if (rbufsize == 0) { printf("Default recv buffer size = 65536 bytes\n"); }
-    else { printf("Custom recv buffer size = %d", rbufsize); }
+    else { printf("Custom recv buffer size = %d\n", rbufsize); }
 
     /* For Statistics Display */
     clock_t current_clock, previous_clock = clock();
@@ -613,7 +615,8 @@ int RECV(int argc, char* argv[])
 
         return 0;
     }
-    
+
+    return 0;
 }
 
 /* HOST MODE*/
